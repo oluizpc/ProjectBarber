@@ -1,17 +1,17 @@
 package com.projectbarber.projectbarber.dto;
 
 public class AgendaDTO {
-    private long id;
+    private Integer id;
     private String dataHora;
     private String status;
-    private long clienteId;
-    private long barbeiroId;
-    private long servicoId;
+    private Integer clienteId;
+    private Integer barbeiroId;
+    private Integer servicoId;
 
-    public long getId() {
+    public Integer getId() {
         return id;
     }
-    public void setId(long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -29,24 +29,24 @@ public class AgendaDTO {
         this.status = status;
     }
 
-    public long getClienteId() {
+    public Integer getClienteId() {
         return clienteId;
     }
-    public void setClienteId(long clienteId) {
+    public void setClienteId(Integer clienteId) {
         this.clienteId = clienteId;
     }
 
-    public long getBarbeiroId() {
+    public Integer getBarbeiroId() {
         return barbeiroId;
     }
-    public void setBarbeiroId(long barbeiroId) {
+    public void setBarbeiroId(Integer barbeiroId) {
         this.barbeiroId = barbeiroId;
     }
 
-    public long getServicoId() {
+    public Integer getServicoId() {
         return servicoId;
     }
-    public void setServicoId(long servicoId) {
+    public void setServicoId(Integer servicoId) {
         this.servicoId = servicoId;
     }
 }

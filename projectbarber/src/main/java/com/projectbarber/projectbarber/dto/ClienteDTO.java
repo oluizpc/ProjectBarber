@@ -1,16 +1,16 @@
 package com.projectbarber.projectbarber.dto;
 
 public class ClienteDTO {
-    private long id;
+    private Integer id;
     private String nome ;
     private String telefone ;
     private String email ;
     private String senha ;
 
-    public long getId() {
+    public Integer getId() {
         return id;
     }
-    public void setId(long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
