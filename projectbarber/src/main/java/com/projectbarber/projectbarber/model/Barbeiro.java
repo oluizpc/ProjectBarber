@@ -10,7 +10,7 @@ import lombok.Data;
 public class Barbeiro {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private long id;
+    private Integer id;
     
     private String nome;
     private String email;   

@@ -11,7 +11,7 @@ public class Servico {
 
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY) 
-    private long id;
+    private Integer id;
 
     private String nomeServico;
     private double preco;

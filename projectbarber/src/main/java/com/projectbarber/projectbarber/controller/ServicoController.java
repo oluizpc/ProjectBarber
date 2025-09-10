@@ -38,19 +38,19 @@ public class ServicoController {
 
     //Buscar servico por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Servico> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<Servico> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(servicoService.buscarPorId(id));
     }
 
     //Atualizar servico
     @PutMapping("/{id}")
-    public ResponseEntity<Servico> atualizarServico(@PathVariable Long id, @RequestBody Servico servico) {
+    public ResponseEntity<Servico> atualizarServico(@PathVariable Integer id, @RequestBody Servico servico) {
         return ResponseEntity.ok(servicoService.atualizarServico(id, servico));
     }   
 
     //Deletar servico
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarServico(@PathVariable Long id) {
+    public ResponseEntity<Void> deletarServico(@PathVariable Integer id) {
         servicoService.deletarServico(id);
         return ResponseEntity.noContent().build();  
     }

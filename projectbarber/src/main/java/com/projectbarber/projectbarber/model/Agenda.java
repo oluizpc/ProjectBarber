@@ -17,7 +17,7 @@ import lombok.Data;
 public class Agenda {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private long id;
+    private Integer id;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")    
     private LocalDateTime dataHora;

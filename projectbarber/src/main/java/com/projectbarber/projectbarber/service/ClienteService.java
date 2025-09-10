@@ -1,5 +1,6 @@
 package com.projectbarber.projectbarber.service;
 
+import com.projectbarber.projectbarber.exception.BadRequestException;
 import com.projectbarber.projectbarber.model.Cliente;
 import com.projectbarber.projectbarber.repository.ClienteRepository;
 import jakarta.validation.Valid;
@@ -19,16 +20,16 @@ public class ClienteService {
     // Cadastro de cliente
     public Cliente cadastrarCliente(@Valid Cliente cliente) {
         clienteRepository.findByEmail(cliente.getEmail()).ifPresent(c -> {
-            throw new IllegalArgumentException("Email já cadastrado");
+            throw new BadRequestException("Email já cadastrado");
         });
 
         return clienteRepository.save(cliente);
     }
 
     // Buscar por ID
-    public Cliente buscarPorId(Long id) {
+    public Cliente buscarPorId(Integer id) {
         return clienteRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+                .orElseThrow(() -> new BadRequestException("Cliente não encontrado"));
     }
 
     // Listando todos
@@ -37,8 +38,14 @@ public class ClienteService {
     }
 
     // Atualizando cliente
-    public Cliente atualizarCliente(Long id, Cliente clienteAtualizado) {
+    public Cliente atualizarCliente(Integer id, Cliente clienteAtualizado) {
         Cliente cliente = buscarPorId(id);
+
+        clienteRepository.findByEmail(clienteAtualizado.getEmail()).ifPresent(c -> {
+            if (!c.getId().equals(id)) {
+                throw new BadRequestException("Email já cadastrado");
+            }
+        }); 
 
         cliente.setNome(clienteAtualizado.getNome());
         cliente.setTelefone(clienteAtualizado.getTelefone());
@@ -48,7 +55,7 @@ public class ClienteService {
     }
 
     // Deletando cliente
-    public void deletarCliente(Long id) {
+    public void deletarCliente(Integer id) {
         Cliente cliente = buscarPorId(id);
         clienteRepository.delete(cliente);
     }

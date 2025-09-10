@@ -46,19 +46,19 @@ public class BarbeiroController {
     
     //Buscar barbeiro por id
     @GetMapping("/{id}")
-    public ResponseEntity<Barbeiro> buscarPorId(@RequestParam Long id) {
+    public ResponseEntity<Barbeiro> buscarPorId(@RequestParam Integer id) {
         return ResponseEntity.ok(barbeiroService.buscarPorId(id));
     }
 
     //Atualizar barbeiro
     @PutMapping("/{id}")
-    public ResponseEntity<Barbeiro> atualizarBarbeiro(@PathVariable Long id, @RequestBody Barbeiro barbeiro) {
+    public ResponseEntity<Barbeiro> atualizarBarbeiro(@PathVariable Integer id, @RequestBody Barbeiro barbeiro) {
         return ResponseEntity.ok(barbeiroService.atualizarBarbeiro(id, barbeiro));
     }
 
     //Deletar barbeiro
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarBarbeiro(@PathVariable Long id) {
+    public ResponseEntity<Void> deletarBarbeiro(@PathVariable Integer id) {
         barbeiroService.deletarBarbeiro(id);
         return ResponseEntity.noContent().build();
 }

@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.projectbarber.projectbarber.model.Servico;
 
 
-public interface ServicoRepository extends JpaRepository<Servico, Long> {
+public interface ServicoRepository extends JpaRepository<Servico, Integer> {
     Optional<Servico> findByNomeServico (String nomeServico);
-    Optional<Servico> findByPreco (String preco);
+    Optional<Servico> findByPreco (Double preco);
 }

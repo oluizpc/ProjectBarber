@@ -1,8 +1,12 @@
 package com.projectbarber.projectbarber.service;
 
+import org.springframework.stereotype.Service;
+
+import com.projectbarber.projectbarber.exception.BadRequestException;
 import com.projectbarber.projectbarber.model.Servico;
 import com.projectbarber.projectbarber.repository.ServicoRepository;
 
+@Service
 public class ServicoService {
     
     private final ServicoRepository servicoRepository;  
@@ -14,14 +18,14 @@ public class ServicoService {
     // cadastro de servico
     public Servico cadastrarServico(Servico servico) {
         servicoRepository.findByNomeServico(servico.getNomeServico()).ifPresent(s -> {
-            throw new IllegalArgumentException("Serviço já cadastrado");
+            throw new BadRequestException("Serviço já cadastrado");
         });
         return servicoRepository.save(servico);}
 
     // buscar por ID
-    public Servico buscarPorId(Long id) {
+    public Servico buscarPorId(Integer id) {
         return servicoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado"));     
+                .orElseThrow(() -> new BadRequestException("Serviço não encontrado"));     
     }
 
     // listar todos
@@ -29,8 +33,14 @@ public class ServicoService {
         return servicoRepository.findAll();     
     }
     //Atualizando servico
-    public Servico atualizarServico(Long id, Servico servicoAtualizado) {
+    public Servico atualizarServico(Integer id, Servico servicoAtualizado) {
         Servico servico = buscarPorId(id);
+
+        servicoRepository.findByNomeServico(servicoAtualizado.getNomeServico()).ifPresent(s -> {
+            if (!s.getId().equals(id)) {
+                throw new BadRequestException("Serviço já cadastrado");
+            }
+        });
 
         servico.setNomeServico(servicoAtualizado.getNomeServico());
         servico.setPreco(servicoAtualizado.getPreco());
@@ -39,7 +49,7 @@ public class ServicoService {
     }
 
     //deletando servico
-    public void deletarServico(Long id) {
+    public void deletarServico(Integer id) {
         Servico servico = buscarPorId(id);
         servicoRepository.delete(servico);
     }  

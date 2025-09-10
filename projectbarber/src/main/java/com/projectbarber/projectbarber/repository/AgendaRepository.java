@@ -12,7 +12,7 @@ import com.projectbarber.projectbarber.model.Servico;
 import com.projectbarber.projectbarber.model.StatusAgendamento;
 
 
-public interface AgendaRepository extends JpaRepository<Agenda, Long> {
+public interface AgendaRepository extends JpaRepository<Agenda, Integer> {
     List<Agenda> findByCliente(Cliente cliente);
     List<Agenda> findByBarbeiro(Barbeiro barbeiro);
     List<Agenda> findByServico(Servico servico);

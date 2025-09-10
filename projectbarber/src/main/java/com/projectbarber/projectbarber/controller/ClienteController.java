@@ -39,19 +39,19 @@ public class ClienteController {
 
     //  Buscar cliente por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Cliente> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<Cliente> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(clienteService.buscarPorId(id));
     }
 
     // Atualizar cliente
     @PutMapping("/{id}")
-    public ResponseEntity<Cliente> atualizarCliente(@PathVariable Long id, @RequestBody Cliente cliente) {
+    public ResponseEntity<Cliente> atualizarCliente(@PathVariable Integer id, @RequestBody Cliente cliente) {
         return ResponseEntity.ok(clienteService.atualizarCliente(id, cliente));
     }
 
     // 5️⃣ Deletar cliente
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarCliente(@PathVariable Long id) {
+    public ResponseEntity<Void> deletarCliente(@PathVariable Integer id) {
         clienteService.deletarCliente(id);
         return ResponseEntity.noContent().build();
     }

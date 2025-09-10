@@ -31,31 +31,31 @@ public class AgendaController {
 
     // Buscando agendamento por id
     @GetMapping("/{id}")
-    public ResponseEntity<Agenda> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<Agenda> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(agendaService.buscarPorId(id));
     }
 
     // Listar agendas por barbeiro
     @GetMapping("/barbeiro/{id}")
-    public ResponseEntity<List<Agenda>> listarPorBarbeiro(@PathVariable Long id) {
+    public ResponseEntity<List<Agenda>> listarPorBarbeiro(@PathVariable Integer id) {
         return ResponseEntity.ok(agendaService.listarPorBarbeiro(id));
     }
 
     // Listar agendas por cliente
     @GetMapping("/cliente/{id}")
-    public ResponseEntity<List<Agenda>> listarPorCliente(@PathVariable Long id) {
+    public ResponseEntity<List<Agenda>> listarPorCliente(@PathVariable Integer id) {
         return ResponseEntity.ok(agendaService.listarPorCliente(id));
     }
 
     // Atualizando agendamento
     @PutMapping("/{id}")
-    public ResponseEntity<Agenda> atualizar(@RequestBody Agenda agenda, @PathVariable Long id) {
+    public ResponseEntity<Agenda> atualizar(@RequestBody Agenda agenda, @PathVariable Integer id) {
         return ResponseEntity.ok(agendaService.atualizar(id, agenda));
     }
 
     // Deletando agendamento
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
         agendaService.deletar(id);
         return ResponseEntity.noContent().build();
     }

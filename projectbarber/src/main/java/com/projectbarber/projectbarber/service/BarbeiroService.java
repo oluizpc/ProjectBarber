@@ -2,11 +2,15 @@ package com.projectbarber.projectbarber.service;
 
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
+import com.projectbarber.projectbarber.exception.BadRequestException;
 import com.projectbarber.projectbarber.model.Barbeiro;
 import com.projectbarber.projectbarber.repository.BarbeiroRepository;
 
 import jakarta.validation.Valid;
 
+@Service
 public class BarbeiroService {
     private final BarbeiroRepository barbeiroRepository;
     
@@ -17,16 +21,16 @@ public class BarbeiroService {
     // Cadastro de barbeiro
     public Barbeiro cadastrarBarbeiro(@Valid Barbeiro barbeiro) {
         barbeiroRepository.findByEmail(barbeiro.getEmail()).ifPresent(b -> {
-            throw new IllegalArgumentException("Email já cadastrado");
+            throw new BadRequestException("Email já cadastrado");
         });
 
         return barbeiroRepository.save(barbeiro);
     }
 
     //Buscar barbeiro por ID
-    public Barbeiro buscarPorId(Long id) {
+    public Barbeiro buscarPorId(Integer id) {
         return barbeiroRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Barbeiro não encontrado"));
+                .orElseThrow(() -> new BadRequestException("Barbeiro não encontrado"));
     }
 
     // Listando todos Barbeiros
@@ -35,8 +39,14 @@ public class BarbeiroService {
     }
 
     // Atualizando barbeiro
-    public Barbeiro atualizarBarbeiro(Long id, Barbeiro barbeiroAtualizado) {
+    public Barbeiro atualizarBarbeiro(Integer id, Barbeiro barbeiroAtualizado) {
         Barbeiro barbeiro = buscarPorId(id);
+
+        barbeiroRepository.findByEmail(barbeiroAtualizado.getEmail()).ifPresent(b -> {
+            if (!b.getId().equals(id)) {
+                throw new BadRequestException("Email já cadastrado");
+            }
+        }); 
 
         barbeiro.setNome(barbeiroAtualizado.getNome());
         barbeiro.setEmail(barbeiroAtualizado.getEmail());
@@ -46,7 +56,7 @@ public class BarbeiroService {
     }
 
     // Deletando barbeiro
-    public void deletarBarbeiro(Long id) {
+    public void deletarBarbeiro(Integer id) {
         Barbeiro barbeiro = buscarPorId(id);
         barbeiroRepository.delete(barbeiro);
     }
