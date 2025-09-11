@@ -15,5 +15,6 @@ public class Servico {
 
     private String nomeServico;
     private double preco;
+    private Integer tempoDuracao;
     
 }

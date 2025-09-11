@@ -18,4 +18,8 @@ public interface AgendaRepository extends JpaRepository<Agenda, Integer> {
     List<Agenda> findByServico(Servico servico);
     Optional<Agenda> findByDataHoraAndBarbeiro(LocalDateTime dataHora, Barbeiro barbeiro); 
     List<Agenda> findByStatus(StatusAgendamento status);
+
+    List<Agenda> findByBarbeiroAndDataHoraBetween(Barbeiro barbeiro, LocalDateTime inicio, LocalDateTime fim);
+
+
 }

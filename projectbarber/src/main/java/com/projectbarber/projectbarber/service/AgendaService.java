@@ -1,5 +1,10 @@
 package com.projectbarber.projectbarber.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -37,11 +42,61 @@ public class AgendaService {
     public Agenda criarAgendamento(Agenda agenda) {
         validarExistenciaEntidades(agenda);
         validarHorario(agenda);
+        agenda.setDataHoraFim(agenda.getDataHora().plusMinutes(agenda.getServico().getTempoDuracao()));
         verificarHorarioOcupado(agenda, null);
+        
 
         agenda.setStatus(StatusAgendamento.MARCADO);
         return agendaRepository.save(agenda);
     }
+
+public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDate dia, Integer duracaoServicoBase) {
+    Barbeiro barbeiro = barbeiroRepository.findById(barbeiroId)
+            .orElseThrow(() -> new BadRequestException("Barbeiro não encontrado"));
+
+    LocalTime inicioExpediente = barbeiro.getInicioExpediente();
+    LocalTime fimExpediente = barbeiro.getFimExpediente();
+
+    List<Agenda> agendamentos = agendaRepository.findByBarbeiroAndDataHoraBetween(
+            barbeiro,
+            dia.atTime(inicioExpediente),
+            dia.atTime(fimExpediente)
+    );
+
+    agendamentos.sort(Comparator.comparing(Agenda::getDataHora));
+
+    List<LocalDateTime> horariosDisponiveis = new ArrayList<>();
+
+    //int duracaoBase = duracaoServicoBase; servico que mais demante tempo na barbearia
+    int duracaoBase = 60; // fixo 60 minutos por horário 
+    LocalDateTime horarioAtual = dia.atTime(inicioExpediente);
+
+    while (horarioAtual.plusMinutes(duracaoBase).toLocalTime().isBefore(fimExpediente.plusSeconds(1))) {
+        boolean cabe = true;
+
+        for (Agenda ag : agendamentos) {
+            LocalDateTime inicioAg = ag.getDataHora();
+            LocalDateTime fimAg = ag.getDataHoraFim();
+
+            boolean sobreposto = horarioAtual.isBefore(fimAg) &&
+                                 horarioAtual.plusMinutes(duracaoBase).isAfter(inicioAg);
+            if (sobreposto) {
+                cabe = false;
+                break;
+            }
+        }
+
+        if (cabe) {
+            horariosDisponiveis.add(horarioAtual);
+        }
+
+        
+        horarioAtual = horarioAtual.plusMinutes(duracaoBase);
+    }
+
+    return horariosDisponiveis;
+    }
+
 
     public List<Agenda> listarTodos() {
         return agendaRepository.findAll();
@@ -57,6 +112,9 @@ public class AgendaService {
 
         validarExistenciaEntidades(agendaAtualizado);
         validarHorario(agendaAtualizado);
+        agendaAtualizado.setDataHoraFim(
+        agendaAtualizado.getDataHora().plusMinutes(agendaAtualizado.getServico().getTempoDuracao())
+    );
         verificarHorarioOcupado(agendaAtualizado, id);
 
         copiarCampos(agenda, agendaAtualizado);
@@ -112,13 +170,19 @@ public class AgendaService {
     }
 
     private void verificarHorarioOcupado(Agenda agenda, Integer idAtual) {
-        agendaRepository.findByDataHoraAndBarbeiro(agenda.getDataHora(), agenda.getBarbeiro())
-            .ifPresent(a -> {
-                if (idAtual == null || !a.getId().equals(idAtual)) {
-                    throw new BadRequestException("Horário já reservado para este barbeiro");
-                }
-            });
+        List<Agenda> agendasBarbeiro = agendaRepository.findByBarbeiro(agenda.getBarbeiro());
+
+        for (Agenda a : agendasBarbeiro) {
+            if (idAtual != null && a.getId().equals(idAtual)) continue;
+
+            boolean sobreposto = agenda.getDataHora().isBefore(a.getDataHoraFim()) &&
+                                agenda.getDataHoraFim().isAfter(a.getDataHora());
+            if (sobreposto) {
+                throw new BadRequestException("Horário conflitante com outro agendamento");
+            }
+        }
     }
+
 
     private void copiarCampos(Agenda original, Agenda atualizado) {
         original.setCliente(atualizado.getCliente());
@@ -126,5 +190,6 @@ public class AgendaService {
         original.setServico(atualizado.getServico());
         original.setDataHora(atualizado.getDataHora());
         original.setStatus(atualizado.getStatus());
+        original.setDataHoraFim(atualizado.getDataHoraFim());
     }
 }

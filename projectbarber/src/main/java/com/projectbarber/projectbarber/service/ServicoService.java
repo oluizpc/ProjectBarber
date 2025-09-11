@@ -44,6 +44,7 @@ public class ServicoService {
 
         servico.setNomeServico(servicoAtualizado.getNomeServico());
         servico.setPreco(servicoAtualizado.getPreco());
+        servico.setTempoDuracao(servicoAtualizado.getTempoDuracao());
 
         return servicoRepository.save(servico);
     }

@@ -1,12 +1,16 @@
 package com.projectbarber.projectbarber.dto;
 
+
 public class AgendaDTO {
     private Integer id;
     private String dataHora;
+    private String horarioFim;
     private String status;
     private Integer clienteId;
     private Integer barbeiroId;
     private Integer servicoId;
+    
+
 
     public Integer getId() {
         return id;
@@ -20,6 +24,13 @@ public class AgendaDTO {
     }
     public void setDataHora(String dataHora) {
         this.dataHora = dataHora;
+    }
+
+    public String getHorarioFim() {
+    return horarioFim;
+    }
+    public void setHorarioFim(String horarioFim) {
+        this.horarioFim = horarioFim;
     }
 
     public String getStatus() {

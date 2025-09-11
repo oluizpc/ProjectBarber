@@ -21,6 +21,8 @@ public class Agenda {
 
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")    
     private LocalDateTime dataHora;
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")    
+    private LocalDateTime dataHoraFim;
     
     @ManyToOne
     private Cliente cliente;
