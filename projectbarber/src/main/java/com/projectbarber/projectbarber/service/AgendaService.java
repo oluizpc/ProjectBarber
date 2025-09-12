@@ -67,7 +67,7 @@ public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDa
 
     List<LocalDateTime> horariosDisponiveis = new ArrayList<>();
 
-    //int duracaoBase = duracaoServicoBase; servico que mais demante tempo na barbearia
+    int duracaoBaseService = duracaoServicoBase; //servico que mais demante tempo na barbearia
     int duracaoBase = 60; // fixo 60 minutos por horário 
     LocalDateTime horarioAtual = dia.atTime(inicioExpediente);
 
@@ -79,7 +79,7 @@ public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDa
             LocalDateTime fimAg = ag.getDataHoraFim();
 
             boolean sobreposto = horarioAtual.isBefore(fimAg) &&
-                                 horarioAtual.plusMinutes(duracaoBase).isAfter(inicioAg);
+                                 horarioAtual.plusMinutes(duracaoBaseService).isAfter(inicioAg);
             if (sobreposto) {
                 cabe = false;
                 break;
