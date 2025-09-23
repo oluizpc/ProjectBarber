@@ -50,7 +50,11 @@ public class BarbeiroService {
 
         barbeiro.setNome(barbeiroAtualizado.getNome());
         barbeiro.setEmail(barbeiroAtualizado.getEmail());
-        barbeiro.setSenha(null);
+        barbeiro.setSenha(barbeiroAtualizado.getSenha());
+        barbeiro.setInicioExpediente(barbeiroAtualizado.getInicioExpediente());
+        barbeiro.setFimExpediente(barbeiroAtualizado.getFimExpediente());
+        barbeiro.setInicioAlmoco(barbeiroAtualizado.getInicioAlmoco());
+        barbeiro.setFimAlmoco(barbeiroAtualizado.getFimAlmoco());
         
         return barbeiroRepository.save(barbeiro);
     }

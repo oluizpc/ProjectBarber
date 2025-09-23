@@ -1,6 +1,7 @@
 package com.projectbarber.projectbarber.model;
 
 import lombok.Data;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -14,8 +15,10 @@ public class Cliente {
 
     private String nome;
     private String telefone;
+    
+    @Column(unique=true)
     private String email;
-    private String senha; //armazenar hash depois
+    private String senha; //armazenar hash/cryptografia depois
 
 }
 

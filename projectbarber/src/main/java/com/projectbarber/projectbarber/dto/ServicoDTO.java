@@ -32,6 +32,4 @@ public class ServicoDTO {
         this.tempoDuracao = tempoDuracao;
     }
 
-
-
 }

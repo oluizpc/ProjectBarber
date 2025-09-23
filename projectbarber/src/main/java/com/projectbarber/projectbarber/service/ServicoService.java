@@ -3,6 +3,7 @@ package com.projectbarber.projectbarber.service;
 import org.springframework.stereotype.Service;
 
 import com.projectbarber.projectbarber.exception.BadRequestException;
+import com.projectbarber.projectbarber.exception.ResourceNotFoundException;
 import com.projectbarber.projectbarber.model.Servico;
 import com.projectbarber.projectbarber.repository.ServicoRepository;
 
@@ -51,8 +52,9 @@ public class ServicoService {
 
     //deletando servico
     public void deletarServico(Integer id) {
-        Servico servico = buscarPorId(id);
+        Servico servico = servicoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado"));
         servicoRepository.delete(servico);
-    }  
+    }
 }
 

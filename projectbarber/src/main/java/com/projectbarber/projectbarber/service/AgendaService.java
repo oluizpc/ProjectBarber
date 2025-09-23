@@ -38,65 +38,73 @@ public class AgendaService {
         this.servicoRepository = servicoRepository;
     }
 
-
+    // Criar novo agendamento
     public Agenda criarAgendamento(Agenda agenda) {
         validarExistenciaEntidades(agenda);
         validarHorario(agenda);
         agenda.setDataHoraFim(agenda.getDataHora().plusMinutes(agenda.getServico().getTempoDuracao()));
         verificarHorarioOcupado(agenda, null);
-        
+
+        // Verificar conflito com horário de almoço
+        Barbeiro barbeiro = agenda.getBarbeiro();
+        LocalTime inicioAgendamento = agenda.getDataHora().toLocalTime();
+        LocalTime fimAgendamento = agenda.getDataHoraFim().toLocalTime();
+
+        boolean dentroAlmoco = !(fimAgendamento.isBefore(barbeiro.getInicioAlmoco())
+                              || inicioAgendamento.isAfter(barbeiro.getFimAlmoco()));
+
+        if (dentroAlmoco) {
+            throw new BadRequestException("Horário coincide com o horário de almoço do barbeiro.");
+        }
 
         agenda.setStatus(StatusAgendamento.MARCADO);
         return agendaRepository.save(agenda);
     }
 
-public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDate dia, Integer duracaoServicoBase) {
-    Barbeiro barbeiro = barbeiroRepository.findById(barbeiroId)
-            .orElseThrow(() -> new BadRequestException("Barbeiro não encontrado"));
+    // Listar horários disponíveis
+    public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDate dia, Integer duracaoServicoBase) {
+        Barbeiro barbeiro = barbeiroRepository.findById(barbeiroId)
+                .orElseThrow(() -> new BadRequestException("Barbeiro não encontrado"));
 
-    LocalTime inicioExpediente = barbeiro.getInicioExpediente();
-    LocalTime fimExpediente = barbeiro.getFimExpediente();
+        LocalTime inicioExpediente = barbeiro.getInicioExpediente();
+        LocalTime fimExpediente = barbeiro.getFimExpediente();
+        LocalTime inicioAlmoco = barbeiro.getInicioAlmoco();
+        LocalTime fimAlmoco = barbeiro.getFimAlmoco();
 
-    List<Agenda> agendamentos = agendaRepository.findByBarbeiroAndDataHoraBetween(
-            barbeiro,
-            dia.atTime(inicioExpediente),
-            dia.atTime(fimExpediente)
-    );
+        List<Agenda> agendamentos = agendaRepository.findByBarbeiroAndDataHoraBetween(
+                barbeiro,
+                dia.atTime(inicioExpediente),
+                dia.atTime(fimExpediente)
+        );
 
-    agendamentos.sort(Comparator.comparing(Agenda::getDataHora));
+        agendamentos.sort(Comparator.comparing(Agenda::getDataHora));
 
-    List<LocalDateTime> horariosDisponiveis = new ArrayList<>();
+        List<LocalDateTime> horariosDisponiveis = new ArrayList<>();
+        LocalDateTime horarioAtual = dia.atTime(inicioExpediente);
 
-    int duracaoBaseService = duracaoServicoBase; //servico que mais demante tempo na barbearia
-    int duracaoBase = 60; // fixo 60 minutos por horário 
-    LocalDateTime horarioAtual = dia.atTime(inicioExpediente);
+    while (horarioAtual.plusMinutes(duracaoServicoBase).isBefore(dia.atTime(fimExpediente).plusSeconds(1))) {
+        LocalTime inicio = horarioAtual.toLocalTime();
+        LocalTime fim = inicio.plusMinutes(duracaoServicoBase);
 
-    while (horarioAtual.plusMinutes(duracaoBase).toLocalTime().isBefore(fimExpediente.plusSeconds(1))) {
-        boolean cabe = true;
+        // Verifica se está dentro do intervalo de almoço
+        boolean dentroAlmoco = inicio.isBefore(fimAlmoco) && fim.isAfter(inicioAlmoco);
 
-        for (Agenda ag : agendamentos) {
-            LocalDateTime inicioAg = ag.getDataHora();
-            LocalDateTime fimAg = ag.getDataHoraFim();
+        // Verifica se está ocupado
+        boolean ocupado = agendamentos.stream().anyMatch(a ->
+                (horarioAtual.isBefore(a.getDataHoraFim()) &&
+                horarioAtual.plusMinutes(duracaoServicoBase).isAfter(a.getDataHora()))
+        );
 
-            boolean sobreposto = horarioAtual.isBefore(fimAg) &&
-                                 horarioAtual.plusMinutes(duracaoBaseService).isAfter(inicioAg);
-            if (sobreposto) {
-                cabe = false;
-                break;
-            }
-        }
-
-        if (cabe) {
+        if (!dentroAlmoco && !ocupado) {
             horariosDisponiveis.add(horarioAtual);
         }
 
-        
-        horarioAtual = horarioAtual.plusMinutes(duracaoBase);
+        horarioAtual = horarioAtual.plusMinutes(duracaoServicoBase);
     }
 
-    return horariosDisponiveis;
-    }
 
+        return horariosDisponiveis;
+    }
 
     public List<Agenda> listarTodos() {
         return agendaRepository.findAll();
@@ -113,8 +121,8 @@ public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDa
         validarExistenciaEntidades(agendaAtualizado);
         validarHorario(agendaAtualizado);
         agendaAtualizado.setDataHoraFim(
-        agendaAtualizado.getDataHora().plusMinutes(agendaAtualizado.getServico().getTempoDuracao())
-    );
+            agendaAtualizado.getDataHora().plusMinutes(agendaAtualizado.getServico().getTempoDuracao())
+        );
         verificarHorarioOcupado(agendaAtualizado, id);
 
         copiarCampos(agenda, agendaAtualizado);
@@ -129,13 +137,13 @@ public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDa
 
     public List<Agenda> listarPorBarbeiro(Integer barbeiroId) {
         Barbeiro barbeiro = barbeiroRepository.findById(barbeiroId)
-            .orElseThrow(() -> new BadRequestException("Barbeiro não encontrado"));
+                .orElseThrow(() -> new BadRequestException("Barbeiro não encontrado"));
         return agendaRepository.findByBarbeiro(barbeiro);
     }
 
     public List<Agenda> listarPorCliente(Integer clienteId) {
         Cliente cliente = clienteRepository.findById(clienteId)
-            .orElseThrow(() -> new BadRequestException("Cliente não encontrado"));
+                .orElseThrow(() -> new BadRequestException("Cliente não encontrado"));
         return agendaRepository.findByCliente(cliente);
     }
 
@@ -145,6 +153,7 @@ public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDa
         return agendaRepository.save(agenda);
     }
 
+    // ===================== MÉTODOS AUXILIARES =====================
 
     private void validarExistenciaEntidades(Agenda agenda) {
         Cliente cliente = clienteRepository.findById(agenda.getCliente().getId())
@@ -160,8 +169,9 @@ public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDa
     }
 
     private void validarHorario(Agenda agenda) {
-        if (agenda.getDataHora().getMinute() != 0) {
-            throw new BadRequestException("Agendamento só pode ser em horários inteiros (ex: 09:00, 10:00)");
+        int minuto = agenda.getDataHora().getMinute();
+        if (minuto % 15 != 0) {
+            throw new BadRequestException("Agendamento só pode ser em intervalos de 15 minutos (ex: 09:00, 09:15, 09:30)");
         }
         int hora = agenda.getDataHora().getHour();
         if (hora < 9 || hora >= 18) {
@@ -176,13 +186,12 @@ public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDa
             if (idAtual != null && a.getId().equals(idAtual)) continue;
 
             boolean sobreposto = agenda.getDataHora().isBefore(a.getDataHoraFim()) &&
-                                agenda.getDataHoraFim().isAfter(a.getDataHora());
+                                 agenda.getDataHoraFim().isAfter(a.getDataHora());
             if (sobreposto) {
                 throw new BadRequestException("Horário conflitante com outro agendamento");
             }
         }
     }
-
 
     private void copiarCampos(Agenda original, Agenda atualizado) {
         original.setCliente(atualizado.getCliente());
