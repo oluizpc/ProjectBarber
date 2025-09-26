@@ -38,72 +38,22 @@ public class AgendaService {
         this.servicoRepository = servicoRepository;
     }
 
-    // Criar novo agendamento
+    // ===================== CRUD =====================
+
     public Agenda criarAgendamento(Agenda agenda) {
         validarExistenciaEntidades(agenda);
         validarHorario(agenda);
+
         agenda.setDataHoraFim(agenda.getDataHora().plusMinutes(agenda.getServico().getTempoDuracao()));
         verificarHorarioOcupado(agenda, null);
 
         // Verificar conflito com horário de almoço
-        Barbeiro barbeiro = agenda.getBarbeiro();
-        LocalTime inicioAgendamento = agenda.getDataHora().toLocalTime();
-        LocalTime fimAgendamento = agenda.getDataHoraFim().toLocalTime();
-
-        boolean dentroAlmoco = !(fimAgendamento.isBefore(barbeiro.getInicioAlmoco())
-                              || inicioAgendamento.isAfter(barbeiro.getFimAlmoco()));
-
-        if (dentroAlmoco) {
+        if (isDentroAlmoco(agenda.getBarbeiro(), agenda.getDataHora().toLocalTime(), agenda.getDataHoraFim().toLocalTime())) {
             throw new BadRequestException("Horário coincide com o horário de almoço do barbeiro.");
         }
 
         agenda.setStatus(StatusAgendamento.MARCADO);
         return agendaRepository.save(agenda);
-    }
-
-    // Listar horários disponíveis
-    public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDate dia, Integer duracaoServicoBase) {
-        Barbeiro barbeiro = barbeiroRepository.findById(barbeiroId)
-                .orElseThrow(() -> new BadRequestException("Barbeiro não encontrado"));
-
-        LocalTime inicioExpediente = barbeiro.getInicioExpediente();
-        LocalTime fimExpediente = barbeiro.getFimExpediente();
-        LocalTime inicioAlmoco = barbeiro.getInicioAlmoco();
-        LocalTime fimAlmoco = barbeiro.getFimAlmoco();
-
-        List<Agenda> agendamentos = agendaRepository.findByBarbeiroAndDataHoraBetween(
-                barbeiro,
-                dia.atTime(inicioExpediente),
-                dia.atTime(fimExpediente)
-        );
-
-        agendamentos.sort(Comparator.comparing(Agenda::getDataHora));
-
-        List<LocalDateTime> horariosDisponiveis = new ArrayList<>();
-        LocalDateTime horarioAtual = dia.atTime(inicioExpediente);
-
-    while (horarioAtual.plusMinutes(duracaoServicoBase).isBefore(dia.atTime(fimExpediente).plusSeconds(1))) {
-        LocalTime inicio = horarioAtual.toLocalTime();
-        LocalTime fim = inicio.plusMinutes(duracaoServicoBase);
-
-        // Verifica se está dentro do intervalo de almoço
-        boolean dentroAlmoco = inicio.isBefore(fimAlmoco) && fim.isAfter(inicioAlmoco);
-
-        // Verifica se está ocupado
-        boolean ocupado = agendamentos.stream().anyMatch(a ->
-                (horarioAtual.isBefore(a.getDataHoraFim()) &&
-                horarioAtual.plusMinutes(duracaoServicoBase).isAfter(a.getDataHora()))
-        );
-
-        if (!dentroAlmoco && !ocupado) {
-            horariosDisponiveis.add(horarioAtual);
-        }
-
-        horarioAtual = horarioAtual.plusMinutes(duracaoServicoBase);
-    }
-
-
-        return horariosDisponiveis;
     }
 
     public List<Agenda> listarTodos() {
@@ -120,6 +70,7 @@ public class AgendaService {
 
         validarExistenciaEntidades(agendaAtualizado);
         validarHorario(agendaAtualizado);
+
         agendaAtualizado.setDataHoraFim(
             agendaAtualizado.getDataHora().plusMinutes(agendaAtualizado.getServico().getTempoDuracao())
         );
@@ -149,8 +100,44 @@ public class AgendaService {
 
     public Agenda alterarStatus(Integer id, StatusAgendamento novoStatus) {
         Agenda agenda = buscarPorId(id);
+        validarTransicaoStatus(agenda.getStatus(), novoStatus);
         agenda.setStatus(novoStatus);
         return agendaRepository.save(agenda);
+    }
+
+    // ===================== LÓGICA DE HORÁRIOS =====================
+
+    public List<LocalDateTime> listarHorariosDisponiveis(Integer barbeiroId, LocalDate dia, Integer duracaoServicoBase) {
+        Barbeiro barbeiro = barbeiroRepository.findById(barbeiroId)
+                .orElseThrow(() -> new BadRequestException("Barbeiro não encontrado"));
+
+        LocalTime inicioExpediente = barbeiro.getInicioExpediente();
+        LocalTime fimExpediente = barbeiro.getFimExpediente();
+
+        List<Agenda> agendamentos = agendaRepository.findByBarbeiroAndDataHoraBetween(
+                barbeiro,
+                dia.atTime(inicioExpediente),
+                dia.atTime(fimExpediente)
+        );
+        agendamentos.sort(Comparator.comparing(Agenda::getDataHora));
+
+        List<LocalDateTime> horariosDisponiveis = new ArrayList<>();
+        LocalDateTime horarioAtual = dia.atTime(inicioExpediente);
+
+        while (horarioAtual.plusMinutes(duracaoServicoBase).isBefore(dia.atTime(fimExpediente).plusSeconds(1))) {
+            LocalDateTime fim = horarioAtual.plusMinutes(duracaoServicoBase);
+
+            boolean dentroAlmoco = isDentroAlmoco(barbeiro, horarioAtual.toLocalTime(), fim.toLocalTime());
+            boolean ocupado = agendamentos.stream().anyMatch(a -> isConflitante(horarioAtual, fim, a));
+
+            if (!dentroAlmoco && !ocupado) {
+                horariosDisponiveis.add(horarioAtual);
+            }
+
+            horarioAtual = horarioAtual.plusMinutes(duracaoServicoBase);
+        }
+
+        return horariosDisponiveis;
     }
 
     // ===================== MÉTODOS AUXILIARES =====================
@@ -173,9 +160,11 @@ public class AgendaService {
         if (minuto % 15 != 0) {
             throw new BadRequestException("Agendamento só pode ser em intervalos de 15 minutos (ex: 09:00, 09:15, 09:30)");
         }
-        int hora = agenda.getDataHora().getHour();
-        if (hora < 9 || hora >= 18) {
-            throw new BadRequestException("Horário fora do expediente");
+
+        LocalTime horaAgendamento = agenda.getDataHora().toLocalTime();
+        Barbeiro barbeiro = agenda.getBarbeiro();
+        if (horaAgendamento.isBefore(barbeiro.getInicioExpediente()) || horaAgendamento.isAfter(barbeiro.getFimExpediente())) {
+            throw new BadRequestException("Horário fora do expediente do barbeiro");
         }
     }
 
@@ -185,9 +174,7 @@ public class AgendaService {
         for (Agenda a : agendasBarbeiro) {
             if (idAtual != null && a.getId().equals(idAtual)) continue;
 
-            boolean sobreposto = agenda.getDataHora().isBefore(a.getDataHoraFim()) &&
-                                 agenda.getDataHoraFim().isAfter(a.getDataHora());
-            if (sobreposto) {
+            if (isConflitante(agenda.getDataHora(), agenda.getDataHoraFim(), a)) {
                 throw new BadRequestException("Horário conflitante com outro agendamento");
             }
         }
@@ -200,5 +187,19 @@ public class AgendaService {
         original.setDataHora(atualizado.getDataHora());
         original.setStatus(atualizado.getStatus());
         original.setDataHoraFim(atualizado.getDataHoraFim());
+    }
+
+    private boolean isDentroAlmoco(Barbeiro b, LocalTime inicio, LocalTime fim) {
+        return !(fim.isBefore(b.getInicioAlmoco()) || inicio.isAfter(b.getFimAlmoco()));
+    }
+
+    private boolean isConflitante(LocalDateTime inicio, LocalDateTime fim, Agenda a) {
+        return inicio.isBefore(a.getDataHoraFim()) && fim.isAfter(a.getDataHora());
+    }
+
+    private void validarTransicaoStatus(StatusAgendamento atual, StatusAgendamento novo) {
+        if (atual == StatusAgendamento.CANCELADO && novo == StatusAgendamento.MARCADO) {
+            throw new BadRequestException("Não é permitido reativar um agendamento cancelado");
+        }
     }
 }

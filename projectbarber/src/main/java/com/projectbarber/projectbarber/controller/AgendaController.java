@@ -1,11 +1,16 @@
 package com.projectbarber.projectbarber.controller;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.projectbarber.projectbarber.model.Agenda;
 import com.projectbarber.projectbarber.service.AgendaService;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -20,7 +25,7 @@ public class AgendaController {
     // Cadastrando horário
     @PostMapping
     public ResponseEntity<Agenda> criarAgenda(@RequestBody Agenda agenda) {
-        return ResponseEntity.ok(agendaService.criarAgendamento(agenda));
+        return ResponseEntity.status(HttpStatus.CREATED).body(agendaService.criarAgendamento(agenda));
     }
 
     // Listando todos os horários
@@ -29,11 +34,12 @@ public class AgendaController {
         return ResponseEntity.ok(agendaService.listarTodos());
     }
 
-    // Buscando agendamento por id
-    @GetMapping("/{id}")
-    public ResponseEntity<Agenda> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(agendaService.buscarPorId(id));
-    }
+// Buscando agendamento por id
+@GetMapping("/{id}")
+public ResponseEntity<Agenda> buscarPorId(@PathVariable Integer id) {
+    Agenda agenda = agendaService.buscarPorId(id);
+    return agenda != null ? ResponseEntity.ok(agenda) : ResponseEntity.notFound().build();
+}
 
     // Listar agendas por barbeiro
     @GetMapping("/barbeiro/{id}")
@@ -59,4 +65,16 @@ public class AgendaController {
         agendaService.deletar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/horarios")
+    public ResponseEntity<List<LocalDateTime>> listarHorariosDisponiveis(
+        @RequestParam Integer barbeiroId,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+        @RequestParam(defaultValue = "30") int duracaoServicoBase) {
+    return ResponseEntity.ok(
+        agendaService.listarHorariosDisponiveis(barbeiroId, data, duracaoServicoBase)
+    );
+}
+
+    
 }
