@@ -125,13 +125,14 @@ public class AgendaService {
         LocalDateTime horarioAtual = dia.atTime(inicioExpediente);
 
         while (horarioAtual.plusMinutes(duracaoServicoBase).isBefore(dia.atTime(fimExpediente).plusSeconds(1))) {
+            LocalDateTime inicioAtual = horarioAtual; // ← variável final/efetivamente final
             LocalDateTime fim = horarioAtual.plusMinutes(duracaoServicoBase);
 
-            boolean dentroAlmoco = isDentroAlmoco(barbeiro, horarioAtual.toLocalTime(), fim.toLocalTime());
-            boolean ocupado = agendamentos.stream().anyMatch(a -> isConflitante(horarioAtual, fim, a));
+            boolean dentroAlmoco = isDentroAlmoco(barbeiro, inicioAtual.toLocalTime(), fim.toLocalTime());
+            boolean ocupado = agendamentos.stream().anyMatch(a -> isConflitante(inicioAtual, fim, a));
 
             if (!dentroAlmoco && !ocupado) {
-                horariosDisponiveis.add(horarioAtual);
+                horariosDisponiveis.add(inicioAtual);
             }
 
             horarioAtual = horarioAtual.plusMinutes(duracaoServicoBase);

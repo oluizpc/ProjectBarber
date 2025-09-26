@@ -34,12 +34,12 @@ public class AgendaController {
         return ResponseEntity.ok(agendaService.listarTodos());
     }
 
-// Buscando agendamento por id
-@GetMapping("/{id}")
-public ResponseEntity<Agenda> buscarPorId(@PathVariable Integer id) {
-    Agenda agenda = agendaService.buscarPorId(id);
-    return agenda != null ? ResponseEntity.ok(agenda) : ResponseEntity.notFound().build();
-}
+    // Buscando agendamento por id
+    @GetMapping("/{id}")
+    public ResponseEntity<Agenda> buscarPorId(@PathVariable Integer id) {
+        Agenda agenda = agendaService.buscarPorId(id);
+        return agenda != null ? ResponseEntity.ok(agenda) : ResponseEntity.notFound().build();
+    }
 
     // Listar agendas por barbeiro
     @GetMapping("/barbeiro/{id}")
