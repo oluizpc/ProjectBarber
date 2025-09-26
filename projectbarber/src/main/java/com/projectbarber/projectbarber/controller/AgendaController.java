@@ -5,7 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.projectbarber.projectbarber.exception.BadRequestException;
 import com.projectbarber.projectbarber.model.Agenda;
+import com.projectbarber.projectbarber.model.Servico;
+import com.projectbarber.projectbarber.repository.ServicoRepository;
 import com.projectbarber.projectbarber.service.AgendaService;
 
 import java.time.LocalDate;
@@ -17,6 +20,7 @@ import java.util.List;
 @RequestMapping("/agendas")
 public class AgendaController {
     private final AgendaService agendaService;
+    private final ServicoRepository servicoRepository;
 
     public AgendaController(AgendaService agendaService) {
         this.agendaService = agendaService;
@@ -66,15 +70,22 @@ public class AgendaController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/horarios")
-    public ResponseEntity<List<LocalDateTime>> listarHorariosDisponiveis(
+@GetMapping("/horarios")
+public ResponseEntity<List<LocalDateTime>> listarHorariosDisponiveis(
         @RequestParam Integer barbeiroId,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
-        @RequestParam(defaultValue = "30") int duracaoServicoBase) {
+        @RequestParam Integer servicoId) {
+
+    Servico servico = servicoRepository.findById(servicoId)
+            .orElseThrow(() -> new BadRequestException("Serviço não encontrado"));
+
+    int duracaoServico = servico.getTempoDuracao();
+
     return ResponseEntity.ok(
-        agendaService.listarHorariosDisponiveis(barbeiroId, data, duracaoServicoBase)
+        agendaService.listarHorariosDisponiveis(barbeiroId, data, duracaoServico)
     );
 }
+
 
     
 }
