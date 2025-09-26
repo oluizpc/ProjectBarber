@@ -22,8 +22,9 @@ public class AgendaController {
     private final AgendaService agendaService;
     private final ServicoRepository servicoRepository;
 
-    public AgendaController(AgendaService agendaService) {
+    public AgendaController(AgendaService agendaService, ServicoRepository servicoRepository) {
         this.agendaService = agendaService;
+        this.servicoRepository = servicoRepository;
     }
 
     // Cadastrando horário
